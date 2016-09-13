@@ -1,24 +1,15 @@
 package demo;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.*;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
@@ -26,9 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 
 @EnableDiscoveryClient
 @SpringBootApplication
@@ -51,7 +42,7 @@ public class DemoApplication {
         reporter.start(2, TimeUnit.SECONDS);
         return reporter;
     }
-
+/*
     @Bean
     CommandLineRunner runner(ReservationRepository rr) {
         return args ->
@@ -59,11 +50,11 @@ public class DemoApplication {
                         .forEach(x -> rr.save(new Reservation(x)));
 
     }
-
+*/
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
     }
-
+/*
     @Component
     @RepositoryEventHandler
     public static class ReservationEventHandler {
@@ -97,7 +88,7 @@ public class DemoApplication {
             this.counterService.increment(evt);
             this.counterService.increment("meter." + evt);
         }
-    }
+    }*/
 }
 
 @RefreshScope
@@ -125,11 +116,11 @@ class ReservationResourceProcessor implements ResourceProcessor<Resource<Reserva
         return reservationResource;
     }
 }
-
+/*
 @RepositoryRestResource
 interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     @RestResource(path = "by-name")
     Collection<Reservation> findByReservationName(@Param("rn") String rn);
 }
-
+*/

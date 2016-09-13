@@ -1,10 +1,6 @@
 package demo;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-
-@Entity
+//@Entity
 public class Reservation {
 
     public Reservation() {
@@ -14,8 +10,8 @@ public class Reservation {
         this.reservationName = reservationName;
     }
 
-    @Id
-    @GeneratedValue
+  //  @Id
+   // @GeneratedValue
     private Long id;
     private String reservationName;
 
