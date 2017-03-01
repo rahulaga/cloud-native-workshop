@@ -4,16 +4,6 @@ Adapted from Josh Long's [Cloud Native](http://github.com/joshlong/cloud-native-
 
 ## Setup
 
-> microservices, for better or for worse, involve a lot of moving parts. Let's make sure we can run all those things in this lab.
-
-- You will need JDK 8, Maven, an IDE and Docker in order to follow along. Specify important environment variables before opening any IDEs: `JAVA_HOME`, `DOCKER_HOST`.
-- Install [the Spring Boot CLI](http://docs.spring.io/autorepo/docs/spring-boot/current/reference/html/getting-started-installing-spring-boot.html#getting-started-installing-the-cli) and [the Spring Cloud CLI](https://github.com/spring-cloud/spring-cloud-cli).
-- [Install the Cloud Foundry CLI](https://docs.cloudfoundry.org/devguide/installcf/install-go-cli.html)
-- Go to the [Spring Initializr](http://start.spring.io) and specify the latest milestone of Spring Boot 1.3 and then choose EVERY checkbox except those related to AWS or Consul, then click generate. In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
-- _For multi-day workshops only_: Run each of the `.sh` scripts in the `./bin` directory; run `psql.sh` after you've run `postgresh.sh` and confirm that they all complete and emit no obvious errors
-
-(_Some versions of this workshop will not use Docker_)
-
 ## 1. "Bootcamp"
 
 > In this lab we'll take a look at building a basic Spring Boot application that uses JPA and Spring Data REST. We'll look at how to start a new project, how Spring Boot exposes functionality, and how testing works.
@@ -112,7 +102,7 @@ Trigger a refresh of the message using the `/refresh` endpoint.
 
 ## 4. Service Registration and Discovery
 
-> In the cloud, services are often ephemeral and it's important to be able to talk to these services abstractly, without worrying about the host and ports for these services. At first blush, this seems like a use-case for DNS, but DNS fails in several key situations. How do we know if there's a service waiting on the other end of a DNS-mapped service that can respond? How do we support more sophisticated load-balancing than DNS + a typical loadbalancer can handle (e.g.: round-robin)? How do we avoid the extra hop outside of most cloud environments required to resolve DNS? For all of these and more, we want the effect of DNS - a dispatch table - without being coupled to DNS. We'll use a service registry and Spring Cloud's `DiscoveryClient` abstraction.
+> In the cloud, services are often ephemeral and it's important to be able to talk to these services abstractly, without worrying about the host and ports for these services. This could be DNS based or based off a service like the Netflix Eureka project. Eureka also allows more sophisticated load-balancing than DNS + a typical loadbalancer can handle (e.g.: round-robin). We'll use a service registry and Spring Cloud's `DiscoveryClient` abstraction.
 
 - Go to the Spring Initializr, select the `Eureka Server` (this brings in `org.springframework.cloud`:`spring-cloud-starter-eureka-server`) checkbox, name it `eureka-service` and then add `@EnableEurekaServer` to the `DemoApplication` class.
 - Make sure this module _also_ talks to the Config Server as described in the last lab by adding the `org.springframework.cloud`:`spring-cloud-starter-config`.
@@ -123,8 +113,6 @@ Trigger a refresh of the message using the `/refresh` endpoint.
 - Create a `bootstrap.properties`, just as with the other modules, but name this one `reservation-client`.
 - Create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programmatically
 
-
-**EXTRA CREDIT**: Install [Consul](http://Consul.io) and replace Eureka with Consul. You could use `./bin/consul.sh`, but prepare yourself for some confusion around host resolution if you're running Docker inside a Vagrant VM.
 
 ## 5. Edge Services: API gateways (circuit breakers, client-side load balancing)
 > Edge services sit as intermediaries between the clients (smart phones, HTML5 applications, etc) and the service. An edge service is a logical place to insert any client-specific requirements (security, API translation, protocol translation) and keep the mid-tier services free of this burdensome logic (as well as free from associated redeploys!)
@@ -169,22 +157,8 @@ Trigger a refresh of the message using the `/refresh` endpoint.
 
 > You may generate the `manifest.yml` manually or you may use a tool like Spring Tool Suite's Spring Boot Dashboard which will, on deploy, prompt you to save the deployment configuration as a `manifest.yml`.
 
-_Multi-day workshop_:
 
-- run `cf.sh` in the `labs/6` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io), **OR**:
-- follow the steps in `cf-simple.sh`. This will `cf push` the `eureka-service` and `config-service`. It will use `cf cups` to create services that are available to `reservation-service` and `reservation-client` as environment variables, just like any other standard service. Then, it will `cf push` `reservation-client` and `reservation-service`, binding to those services. See `cf-simple.sh` for details and comments - you should be able to follow along on Windows as well.
-
-> As you push new instances, you'll get new routes because of the configuration in the `manifest.yml` which specifies host is "...-${random-word}". When creating the user-provided-services (`cf cups ..`) be sure to choose only the first route. To delete orphaned routes, use `cf delete-orphaned-routes`
-
-> if you're running the `cf cups` commands, remember to quote and escape correctly, e.g.: `cf cups "{ \"uri":\"..\" }"`
-
-- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-client`: `curl -d{} http://_RESERVATION_CLIENT_ROUTE_/shutdown`, replacing `_RESERVATION_CLIENT_ROUTE_`.
-- observe that `cf apps` records the downed, _flapping_ service and eventually restores it.
-- observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
-
-> if you need to delete an application, you can use `cf d _APP_NAME_`, where `_APP_NAME_` is your application's logical name. If you want to delete a service, use `cf ds _SERVICE_NAME_` where `_SERVICE_NAME_` is a logical name for the service. Use `-f` to force the deletion without confirmation.
-
-## 7. Streams
+## 6. Streams
 > while REST is an easy, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
 
 - start `./bin/rabbitmq.sh`.
@@ -211,7 +185,7 @@ _Multi-day workshop_:
 
 
 
-## 8. Distributed Tracing with Zipkin
+## 7. Distributed Tracing with Zipkin
 
 > Distributed tracing lets us trace the path of a request from one service to another. It's very useful in understanding where a failure is occurring in a complex chain of calls.
 
@@ -225,7 +199,7 @@ _Multi-day workshop_:
 - add `org.springframework.cloud`:`spring-cloud-starter-zipkin` to both the `reservation-service` and the `reservation-client`
 - observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://localhost:9411` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints. The `Dependencies` view in Zipkin shows you the topology of the cluster.
 
-## 9. Security
+## 8. Security
 
 > in a distributed systems world, multiple clients might access multiple services and it becomes very important to have an easy-to-scale answer to the question: which clients may access which resources? The solution for this problem is single signon: all requests to a given resource present a token that may be redeemed with a centralized authentication service. We'll build an OAuth 2-powered authorization service and that secure our edge service to talk to it.
 
@@ -253,7 +227,7 @@ _Multi-day workshop_:
 
 
 
-##  10. Optimize for Velocity and Consistency
+##  9. Optimize for Velocity and Consistency
 - create a parent dependency that in turn defines all the Git Commit ID plugins, the executable jars, etc.
 - package up common resources like `logstash.xml`
 - create a new stereotypical and task-centric Maven `starter` dependency that in turn brings in commonly used dependencies like `org.springframework.cloud`:`spring-cloud-starter-zipkin`, `org.springframework.cloud`:`spring-cloud-starter-eureka`,
