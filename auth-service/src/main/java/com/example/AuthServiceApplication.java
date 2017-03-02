@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,10 +32,11 @@ import java.util.stream.Stream;
 
 @SpringBootApplication
 @EnableResourceServer
-public class AuthServerApplication {
+@EnableEurekaClient
+public class AuthServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AuthServerApplication.class, args);
+		SpringApplication.run(AuthServiceApplication.class, args);
 	}
 }
 
